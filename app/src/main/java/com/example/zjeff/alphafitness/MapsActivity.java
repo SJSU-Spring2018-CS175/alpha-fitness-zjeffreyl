@@ -1,6 +1,7 @@
 package com.example.zjeff.alphafitness;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.nfc.Tag;
@@ -14,6 +15,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +41,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private static final float DEFAULT_ZOOM = 15f;
     Button recordButton;
+    ImageButton profileButton;
     //Stopwatch
     TextView duration;
     int MilliSeconds, Seconds, Minutes;
@@ -53,6 +56,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         getLocationPermission();
+        profileButton = (ImageButton)findViewById(R.id.profile);
+        profileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MapsActivity.this, Profile.class);
+                startActivity(i);
+            }
+        });
         //Stopwatch
         recordButton = (Button)findViewById(R.id.recordButton);
         recordButton.setOnClickListener(new View.OnClickListener() {

@@ -1,9 +1,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/backframe"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.zjeff.alphafitness.PortraitRecordWorkout">
+    tools:context="com.example.zjeff.alphafitness.MapsActivity">
     <!-- TODO: Update blank fragment layout -->
     <!-- Record Workout Activity UI -->
     <ScrollView
@@ -41,7 +40,7 @@
                         android:textSize="30sp"
                         android:textStyle="bold" />
 
-                    <ImageView
+                    <ImageButton
                         android:id="@+id/profile"
                         android:layout_width="50dp"
                         android:layout_height="50dp"
@@ -175,8 +174,7 @@
                     android:layout_alignParentEnd="true"
                     android:layout_alignParentRight="true"
                     android:layout_below="@+id/layout_mapContainer"
-                    tools:context=".MapsActivity"
-                    tools:layout="@layout/activity_maps" />
+                    tools:context=".MapsActivity"/>
             </RelativeLayout>
         </LinearLayout>
     </ScrollView>
