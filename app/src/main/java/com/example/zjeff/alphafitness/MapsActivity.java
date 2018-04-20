@@ -1,8 +1,11 @@
 package com.example.zjeff.alphafitness;
 
 import android.Manifest;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
@@ -54,6 +57,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean update = false;
 
     private ArrayList<LatLng> coordinates = new ArrayList<>();
+    public float distanceInMeters = 0;
 
     Button recordButton;
     ImageButton profileButton;
@@ -133,8 +137,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         Minutes = 0;
                         MilliSeconds = 0;
                         duration.setText("00:00:00");
+                        Toast.makeText(getApplicationContext(), "" + distanceInMeters + " m of size: " + coordinates.size(), Toast.LENGTH_SHORT).show();
                         coordinates.clear();
                         mMap.clear();
+                        distanceInMeters = 0;
                         //Option to Start
                         recordButton.setText("Start");
                         state = recordState.REST;
@@ -151,6 +157,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
         duration = (TextView) findViewById(R.id.duration);
+
+        Configuration config = getResources().getConfiguration();
+        FragmentManager fragmentManager = getFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        if(config.orientation == Configuration.ORIENTATION_LANDSCAPE && state == recordState.STOP){
+            LandscapeRecordWorkout landscapeRecordWorkout = new LandscapeRecordWorkout();
+            fragmentTransaction.replace(android.R.id.content, landscapeRecordWorkout).commit();
+        }
         handler = new Handler();
     }
 
@@ -163,9 +177,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Minutes = Seconds / 60;
             Seconds = Seconds % 60;
             MilliSeconds = (int) (UpdateTime % 100);
-            if(update = true && state == recordState.START){
-                Toast.makeText(getApplicationContext(), "HERE", Toast.LENGTH_SHORT).show();
-                if(coordinates.size() > 1) {
+            if(update = true && state == recordState.START && coordinates.size() % 3 == 0){
+                if(coordinates.size() > 3) {
                     drawPolyLine();
                 }
                 update = false;
@@ -177,10 +190,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     };
 
     private void drawPolyLine(){
-        Polyline line = mMap.addPolyline(new PolylineOptions().add(
-                new LatLng(coordinates.get(coordinates.size()-2).latitude, coordinates.get(coordinates.size()-2).longitude),
-                new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude)
-                ).width(3).color(Color.BLUE).geodesic(true));
+        LatLng src =  new LatLng(coordinates.get(coordinates.size()-4).latitude, coordinates.get(coordinates.size()-4).longitude);
+        LatLng des =  new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude);
+        Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(3).color(Color.BLUE).geodesic(true));
+        Location loc1 = new Location("");
+        loc1.setLatitude(src.latitude);
+        loc1.setLongitude(src.longitude);
+        Location loc2 = new Location("");
+        loc2.setLatitude(des.latitude);
+        loc2.setLongitude(des.longitude);
+        distanceInMeters += loc1.distanceTo(loc2);
     }
 
     private void getDeviceLocation() {
