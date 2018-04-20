@@ -81,6 +81,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public int stepsTaken = 0;
     public float distance = 0f;
     float stepToMeters = 0.7f;
+    float caloriesBurned = 0;
+    float caloriesPerStep = 0.04f;
 
 
     LocationManager locationManager;
@@ -118,16 +120,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     //Stop goes to rest
                     if (state == recordState.STOP) {
                         //Everything that happens at start here
-                        MillisecondTime = 0L;
-                        Seconds = 0;
-                        Minutes = 0;
-                        MilliSeconds = 0;
+                        clearDataValues();
+                        mMap.clear();
                         duration.setText("00:00:00");
                         distanceUI.setText("0.00M");
-                        coordinates.clear();
-                        stepsTaken =0;
-                        distance = 0;
-                        mMap.clear();
                         //Option to Start
                         recordButton.setText("Start");
                         state = recordState.REST;
@@ -178,6 +174,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onSensorChanged(SensorEvent sensorEvent) {
         if(running){
             stepsTaken += sensorEvent.values[0];
+            caloriesBurned += sensorEvent.values[0] * caloriesPerStep;
+            Toast.makeText(this,"" + caloriesBurned, Toast.LENGTH_SHORT).show();
             distance += sensorEvent.values[0] * stepToMeters;
         }
     }
@@ -349,5 +347,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 startActivity(new Intent(this, LandscapeRecordWorkout.class));
             }
         }
+    }
+
+    public void clearDataValues(){
+        MillisecondTime = 0L;
+        Seconds = 0;
+        Minutes = 0;
+        MilliSeconds = 0;
+        coordinates.clear();
+        stepsTaken =0;
+        distance = 0;
+        caloriesBurned = 0;
     }
 }
