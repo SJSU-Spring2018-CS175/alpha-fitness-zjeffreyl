@@ -21,10 +21,10 @@ public class MainActivity extends AppCompatActivity {
         Configuration config = getResources().getConfiguration();
         FragmentManager fragmentManager = getFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        if(config.orientation == Configuration.ORIENTATION_LANDSCAPE){
+        /*if(config.orientation == Configuration.ORIENTATION_LANDSCAPE){
             LandscapeRecordWorkout landscapeRecordWorkout = new LandscapeRecordWorkout();
             fragmentTransaction.replace(android.R.id.content, landscapeRecordWorkout).commit();
-        }
+        }*/
         if(config.orientation == Configuration.ORIENTATION_PORTRAIT){
             PortraitRecordWorkout portraitRecordWorkout = new PortraitRecordWorkout();
             fragmentTransaction.replace(android.R.id.content, portraitRecordWorkout).commit();

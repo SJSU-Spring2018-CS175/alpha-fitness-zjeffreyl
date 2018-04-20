@@ -1,12 +1,18 @@
 package com.example.zjeff.alphafitness;
 
 import android.Manifest;
+import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -41,10 +47,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, SensorEventListener {
 
     private GoogleMap mMap;
     private static final String TAG = "MapActivity";
@@ -57,7 +64,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean update = false;
 
     private ArrayList<LatLng> coordinates = new ArrayList<>();
-    public float distanceInMeters = 0;
+    SensorManager sensorManager;
+    boolean running = false;
 
     Button recordButton;
     ImageButton profileButton;
@@ -66,9 +74,81 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     int MilliSeconds, Seconds, Minutes;
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
     Handler handler;
+    //Distance
+    TextView distanceUI;
+
+    //Data
+    public int stepsTaken = 0;
+    public float distance = 0f;
+    float stepToMeters = 0.7f;
 
 
     LocationManager locationManager;
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_maps);
+        getLocationPermission();
+        profileButton = (ImageButton) findViewById(R.id.profile);
+
+        sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+
+        profileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(MapsActivity.this, Profile.class);
+                startActivity(i);
+            }
+        });
+        //Stopwatch
+        recordButton = (Button) findViewById(R.id.recordButton);
+        recordButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //Start goes to stop
+                if (state == recordState.START) {
+                    //Everything that happens at stop here
+                    TimeBuff += MillisecondTime;
+                    handler.removeCallbacks(runnable);
+                    running = false;
+                    //Option to Reset
+                    recordButton.setText("Reset");
+                    state = recordState.STOP;
+                } else
+                    //Stop goes to rest
+                    if (state == recordState.STOP) {
+                        //Everything that happens at start here
+                        MillisecondTime = 0L;
+                        Seconds = 0;
+                        Minutes = 0;
+                        MilliSeconds = 0;
+                        duration.setText("00:00:00");
+                        distanceUI.setText("0.00M");
+                        coordinates.clear();
+                        stepsTaken =0;
+                        distance = 0;
+                        mMap.clear();
+                        //Option to Start
+                        recordButton.setText("Start");
+                        state = recordState.REST;
+                    }
+                    //Rest goes to start
+                    else {
+                        StartTime = SystemClock.uptimeMillis();
+                        handler.postDelayed(runnable, 0);
+                        running = true;
+                        //Option to stop
+                        recordButton.setText("Stop");
+                        //lerp camera lock
+                        state = recordState.START;
+                    }
+            }
+        });
+        duration = (TextView) findViewById(R.id.duration);
+        distanceUI = (TextView) findViewById(R.id.distance);
+        handler = new Handler();
+    }
+
 
     @Override
     public void onLocationChanged(Location location) {
@@ -94,6 +174,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if(running){
+            stepsTaken += sensorEvent.values[0];
+            distance += sensorEvent.values[0] * stepToMeters;
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
     //record states
     public enum recordState {
         START, STOP, REST
@@ -103,69 +196,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public recordState state = recordState.REST;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_maps);
-        getLocationPermission();
-        profileButton = (ImageButton) findViewById(R.id.profile);
-        profileButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent i = new Intent(MapsActivity.this, Profile.class);
-                startActivity(i);
-            }
-        });
-        //Stopwatch
-        recordButton = (Button) findViewById(R.id.recordButton);
-        recordButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //Start goes to stop
-                if (state == recordState.START) {
-                    //Everything that happens at stop here
-                    TimeBuff += MillisecondTime;
-                    handler.removeCallbacks(runnable);
-                    //Option to Reset
-                    recordButton.setText("Reset");
-                    state = recordState.STOP;
-                } else
-                    //Stop goes to rest
-                    if (state == recordState.STOP) {
-                        //Everything that happens at start here
-                        MillisecondTime = 0L;
-                        Seconds = 0;
-                        Minutes = 0;
-                        MilliSeconds = 0;
-                        duration.setText("00:00:00");
-                        Toast.makeText(getApplicationContext(), "" + distanceInMeters + " m of size: " + coordinates.size(), Toast.LENGTH_SHORT).show();
-                        coordinates.clear();
-                        mMap.clear();
-                        distanceInMeters = 0;
-                        //Option to Start
-                        recordButton.setText("Start");
-                        state = recordState.REST;
-                    }
-                    //Rest goes to start
-                    else {
-                        StartTime = SystemClock.uptimeMillis();
-                        handler.postDelayed(runnable, 0);
-                        //Option to stop
-                        recordButton.setText("Stop");
-                        //lerp camera lock
-                        state = recordState.START;
-                    }
-            }
-        });
-        duration = (TextView) findViewById(R.id.duration);
-
-        Configuration config = getResources().getConfiguration();
-        FragmentManager fragmentManager = getFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        if(config.orientation == Configuration.ORIENTATION_LANDSCAPE && state == recordState.STOP){
-            LandscapeRecordWorkout landscapeRecordWorkout = new LandscapeRecordWorkout();
-            fragmentTransaction.replace(android.R.id.content, landscapeRecordWorkout).commit();
+    protected void onResume() {
+        super.onResume();
+        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+        if(countSensor != null){
+            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
+        }else{
+            Toast.makeText(this, "Sensor not found", Toast.LENGTH_SHORT).show();
         }
-        handler = new Handler();
     }
 
     public Runnable runnable = new Runnable() {
@@ -185,6 +223,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
             duration.setText(String.format("" + String.format("%02d", Minutes) + ":" + String.format("%02d", Seconds)
                     + ":" + String.format("%02d", MilliSeconds)));
+            //roundedDistance 0.00
+            DecimalFormat f = new DecimalFormat("##.0");
+            distanceUI.setText("" + f.format(distance) + "m");
             handler.postDelayed(this, 0);
         }
     };
@@ -193,13 +234,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng src =  new LatLng(coordinates.get(coordinates.size()-4).latitude, coordinates.get(coordinates.size()-4).longitude);
         LatLng des =  new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude);
         Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(3).color(Color.BLUE).geodesic(true));
-        Location loc1 = new Location("");
-        loc1.setLatitude(src.latitude);
-        loc1.setLongitude(src.longitude);
-        Location loc2 = new Location("");
-        loc2.setLatitude(des.latitude);
-        loc2.setLongitude(des.longitude);
-        distanceInMeters += loc1.distanceTo(loc2);
     }
 
     private void getDeviceLocation() {
@@ -217,7 +251,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             return;
         }
         Location location = locationManager.getLastKnownLocation(provider);
-        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), DEFAULT_ZOOM);
+        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), 17f);
         locationManager.requestLocationUpdates(provider, 1000, 0, this);
     }
 
@@ -300,6 +334,20 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 return;
             }
             mMap.setMyLocationEnabled(true);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if(state != recordState.START){
+            if(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
+                /*LandscapeRecordWorkout landscapeRecordWorkout = new LandscapeRecordWorkout();
+                FragmentManager fm = getFragmentManager();
+                FragmentTransaction fragmentTransaction = fm.beginTransaction();
+                fragmentTransaction.replace(android.R.id.content, landscapeRecordWorkout).commit();*/
+                startActivity(new Intent(this, LandscapeRecordWorkout.class));
+            }
         }
     }
 }

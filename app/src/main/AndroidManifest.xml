@@ -51,6 +51,7 @@
         <activity android:name=".Profile"
             android:screenOrientation="portrait">
         </activity>
+        <activity android:name=".LandscapeRecordWorkout"></activity>
     </application>
 
 </manifest>
