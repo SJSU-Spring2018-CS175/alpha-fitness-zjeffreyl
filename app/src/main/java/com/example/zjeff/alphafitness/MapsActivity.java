@@ -3,6 +3,7 @@ package com.example.zjeff.alphafitness;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
@@ -32,8 +33,13 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener {
 
@@ -45,7 +51,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private static final float DEFAULT_ZOOM = 15f;
-    private CompoundButton mAnimateToggle;
+    private ArrayList<LatLng> coordinates = new ArrayList<>();
     Button recordButton;
     ImageButton profileButton;
     //Stopwatch
@@ -59,7 +65,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onLocationChanged(Location location) {
         if(state == recordState.START) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(new LatLng(location.getLatitude(), location.getLongitude())));
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            coordinates.add(latLng);
+            if(coordinates.size() > 3) {
+                mMap.addPolyline(new PolylineOptions().add
+                        (coordinates.get(coordinates.size()-2), coordinates.get(coordinates.size()-1)).width(5).color(Color.BLUE));
+            }
         }
     }
 
@@ -120,6 +132,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         Minutes = 0;
                         MilliSeconds = 0;
                         duration.setText("00:00:00");
+                        coordinates.clear();
                         //Option to Start
                         recordButton.setText("Start");
                         state = recordState.REST;
@@ -153,6 +166,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             handler.postDelayed(this, 0);
         }
     };
+
+    public void restoreMapsActivity(){
+
+    }
 
     private void getDeviceLocation() {
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
