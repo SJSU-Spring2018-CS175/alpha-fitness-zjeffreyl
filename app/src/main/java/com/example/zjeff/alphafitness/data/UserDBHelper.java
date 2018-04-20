@@ -17,16 +17,16 @@ public class UserDBHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String SQL_CREATE_USER_TABLE = "CREATE TABLE " + UserContract.UserEntry.TABLE_NAME + " ("
                 + UserContract.UserEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
-                + UserContract.UserEntry.COLUMN_NAME + " TEXT NOT NULL, "
-                + UserContract.UserEntry.COLUMN_WEIGHT + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_TIME_AVERAGE + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_CALORIES_AVERAGE + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_TIME_ALL_TIME + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME + " INTEGER NOT NULL, "
-                + UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME + " INTEGER NOT NULL); ";
+                + UserContract.UserEntry.COLUMN_NAME + " TEXT, "
+                + UserContract.UserEntry.COLUMN_WEIGHT + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_TIME_AVERAGE + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_CALORIES_AVERAGE + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_TIME_ALL_TIME + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME + " INTEGER, "
+                + UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME + " INTEGER); ";
         sqLiteDatabase.execSQL(SQL_CREATE_USER_TABLE);
     }
 

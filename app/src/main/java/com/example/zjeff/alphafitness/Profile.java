@@ -18,14 +18,14 @@ import org.w3c.dom.Text;
 public class Profile extends AppCompatActivity {
 
     Button goBack;
-    TextView averageDistance = (TextView)findViewById(R.id.Distance);
-    TextView averageTime = (TextView)findViewById(R.id.Time);
-    TextView averageWorkouts = (TextView)findViewById(R.id.Workouts);
-    TextView averageCalories = (TextView)findViewById(R.id.CaloriesBurned);
-    TextView allTimeDistance = (TextView)findViewById(R.id.DistanceAllTime);
-    TextView allTimeTime = (TextView)findViewById(R.id.TimeAllTime);
-    TextView allTimeWorkouts = (TextView)findViewById(R.id.WorkoutsAllTime);
-    TextView allTimeCalories = (TextView)findViewById(R.id.CaloriesBurnedAllTime);
+    //TextView averageDistance = (TextView)findViewById(R.id.Distance);
+    //TextView averageTime = (TextView)findViewById(R.id.Time);
+    //TextView averageWorkouts = (TextView)findViewById(R.id.Workouts);
+    //TextView averageCalories = (TextView)findViewById(R.id.CaloriesBurned);
+    //TextView allTimeDistance = (TextView)findViewById(R.id.DistanceAllTime);
+    //TextView allTimeTime = (TextView)findViewById(R.id.TimeAllTime);
+    //TextView allTimeWorkouts = (TextView)findViewById(R.id.WorkoutsAllTime);
+    //TextView allTimeCalories = (TextView)findViewById(R.id.CaloriesBurnedAllTime);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,7 +40,7 @@ public class Profile extends AppCompatActivity {
             }
         });
 
-        //displayDatabaseInfo();
+        displayDatabaseInfo();
     }
 
 

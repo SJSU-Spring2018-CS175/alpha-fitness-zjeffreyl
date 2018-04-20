@@ -50,8 +50,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private Boolean mLocationPermissionGranted = false;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private static final float DEFAULT_ZOOM = 15f;
+    private static final float DEFAULT_ZOOM = 23f;
+    public boolean update = false;
+
     private ArrayList<LatLng> coordinates = new ArrayList<>();
+
     Button recordButton;
     ImageButton profileButton;
     //Stopwatch
@@ -60,18 +63,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
     Handler handler;
 
+
     LocationManager locationManager;
 
     @Override
     public void onLocationChanged(Location location) {
         if(state == recordState.START) {
             LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            moveCamera(latLng, DEFAULT_ZOOM);
             coordinates.add(latLng);
-            if(coordinates.size() > 3) {
-                mMap.addPolyline(new PolylineOptions().add
-                        (coordinates.get(coordinates.size()-2), coordinates.get(coordinates.size()-1)).width(5).color(Color.BLUE));
-            }
+            update = true;
         }
     }
 
@@ -133,6 +134,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         MilliSeconds = 0;
                         duration.setText("00:00:00");
                         coordinates.clear();
+                        mMap.clear();
                         //Option to Start
                         recordButton.setText("Start");
                         state = recordState.REST;
@@ -161,14 +163,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             Minutes = Seconds / 60;
             Seconds = Seconds % 60;
             MilliSeconds = (int) (UpdateTime % 100);
+            if(update = true && state == recordState.START){
+                Toast.makeText(getApplicationContext(), "HERE", Toast.LENGTH_SHORT).show();
+                if(coordinates.size() > 1) {
+                    drawPolyLine();
+                }
+                update = false;
+            }
             duration.setText(String.format("" + String.format("%02d", Minutes) + ":" + String.format("%02d", Seconds)
                     + ":" + String.format("%02d", MilliSeconds)));
             handler.postDelayed(this, 0);
         }
     };
 
-    public void restoreMapsActivity(){
-
+    private void drawPolyLine(){
+        Polyline line = mMap.addPolyline(new PolylineOptions().add(
+                new LatLng(coordinates.get(coordinates.size()-2).latitude, coordinates.get(coordinates.size()-2).longitude),
+                new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude)
+                ).width(3).color(Color.BLUE).geodesic(true));
     }
 
     private void getDeviceLocation() {
