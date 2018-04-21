@@ -45,20 +45,12 @@ public class Profile extends AppCompatActivity {
 
 
     private void displayDatabaseInfo() {
-
         // To access our database, we instantiate our subclass of SQLiteOpenHelper
-
         // and pass the context, which is the current activity.
-
         UserDBHelper mDbHelper = new UserDBHelper(this);
 
-
-
         // Create and/or open a database to read from it
-
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
-
-
 
         // Perform this raw SQL query "SELECT * FROM pets"
 
@@ -73,17 +65,11 @@ public class Profile extends AppCompatActivity {
             // pets table in the database).
 
             TextView displayView = (TextView) findViewById(R.id.DistanceAllTime);
-
             displayView.setText("Number of rows in pets database table: " + cursor.getCount());
-
         } finally {
-
             // Always close the cursor when you're done reading from it. This releases all its
-
             // resources and makes it invalid.
-
             cursor.close();
-
         }
 
     }

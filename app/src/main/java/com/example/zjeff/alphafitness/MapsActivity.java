@@ -4,10 +4,15 @@ import android.Manifest;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -19,13 +24,17 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.nfc.Tag;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -33,6 +42,8 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.zjeff.alphafitness.data.UserContract;
+import com.example.zjeff.alphafitness.data.UserDBHelper;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
@@ -51,7 +62,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, SensorEventListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener, SensorEventListener {
 
     private GoogleMap mMap;
     private static final String TAG = "MapActivity";
@@ -62,6 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private FusedLocationProviderClient mFusedLocationProviderClient;
     private static final float DEFAULT_ZOOM = 23f;
     public boolean update = false;
+    TextView workoutHeading;
 
     private ArrayList<LatLng> coordinates = new ArrayList<>();
     SensorManager sensorManager;
@@ -73,7 +85,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     TextView duration;
     int MilliSeconds, Seconds, Minutes;
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
-    Handler handler;
+    public static Handler handler;
     //Distance
     TextView distanceUI;
 
@@ -84,6 +96,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     float caloriesBurned = 0;
     float caloriesPerStep = 0.04f;
 
+    private UserDBHelper userDBHelper;
+
+    //service connection
+    IMyAidlInterface remoteService;
+    RemoteConnection remoteConnection = null;
+
+    class RemoteConnection implements ServiceConnection {
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            remoteService = IMyAidlInterface.Stub.asInterface((IBinder) service);
+            Toast.makeText(MapsActivity.this,
+                    "Remote Service connected.", Toast.LENGTH_LONG).show();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            remoteService = null;
+            Toast.makeText(MapsActivity.this,
+                    "Remote Service disconnected.", Toast.LENGTH_LONG).show();
+        }
+    }
 
     LocationManager locationManager;
     @Override
@@ -91,9 +125,19 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         getLocationPermission();
+        userDBHelper = new UserDBHelper(this);
+        workoutHeading = (TextView)findViewById(R.id.recordworkoutheading);
         profileButton = (ImageButton) findViewById(R.id.profile);
-
         sensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
+        // initialize the service
+        remoteConnection = new RemoteConnection();
+        Intent intent = new Intent();
+        intent.setClassName("com.example.zjeff.alphafitness",
+               com.example.zjeff.alphafitness.MyServices.class.getName());
+        if (!bindService(intent, remoteConnection, BIND_AUTO_CREATE)) {
+            Toast.makeText(MapsActivity.this,
+                    "Fail to bind the remote service.", Toast.LENGTH_LONG).show();
+        }
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -110,7 +154,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 //Start goes to stop
                 if (state == recordState.START) {
                     //Everything that happens at stop here
-                    TimeBuff += MillisecondTime;
+                    //TimeBuff += MillisecondTime;
                     handler.removeCallbacks(runnable);
                     running = false;
                     //Option to Reset
@@ -121,6 +165,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if (state == recordState.STOP) {
                         //Everything that happens at start here
                         clearDataValues();
+                        MillisecondTime = 0L;
+                        Seconds = 0;
+                        Minutes = 0;
+                        MilliSeconds = 0;
                         mMap.clear();
                         duration.setText("00:00:00");
                         distanceUI.setText("0.00M");
@@ -143,6 +191,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         duration = (TextView) findViewById(R.id.duration);
         distanceUI = (TextView) findViewById(R.id.distance);
         handler = new Handler();
+
+        displayDatabaseInfo();
     }
 
 
@@ -350,13 +400,68 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void clearDataValues(){
-        MillisecondTime = 0L;
-        Seconds = 0;
-        Minutes = 0;
-        MilliSeconds = 0;
         coordinates.clear();
         stepsTaken =0;
         distance = 0;
         caloriesBurned = 0;
     }
+
+    public void insertUserData(){
+        SQLiteDatabase db = userDBHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(UserContract.UserEntry.COLUMN_NAME, "Jeff");
+        values.put(UserContract.UserEntry.COLUMN_WEIGHT, "160");
+        values.put(UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE, "30");
+        values.put(UserContract.UserEntry.COLUMN_TIME_AVERAGE,"20000");
+        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE,"1");
+        values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, "50");
+        values.put(UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME, "100");
+        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME, "3");
+        values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, "120");
+        db.insert(UserContract.UserEntry.TABLE_NAME, null, values);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()){
+            case R.id.action_insert_dummy_data:
+                if(state == recordState.STOP){
+                    insertUserData();
+                }
+                return true;
+            case R.id.action_delete_all_entries:
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return true;
+    }
+
+    private void displayDatabaseInfo() {
+        // To access our database, we instantiate our subclass of SQLiteOpenHelper
+        // and pass the context, which is the current activity.
+        UserDBHelper mDbHelper = new UserDBHelper(this);
+        // Create and/or open a database to read from it
+        SQLiteDatabase db = mDbHelper.getReadableDatabase();
+        // Perform this raw SQL query "SELECT * FROM pets"
+        // to get a Cursor that contains all rows from the pets table.
+        Cursor cursor = db.rawQuery("SELECT * FROM " + UserContract.UserEntry.TABLE_NAME, null);
+        try {
+            // Display the number of rows in the Cursor (which reflects the number of rows in the
+            // pets table in the database).
+            TextView displayView = (TextView) findViewById(R.id.recordworkoutheading);
+            displayView.setText("Number of rows in user database table: " + cursor.getCount());
+        } finally {
+            // Always close the cursor when you're done reading from it. This releases all its
+            // resources and makes it invalid.
+            cursor.close();
+        }
+    }
+
+
 }

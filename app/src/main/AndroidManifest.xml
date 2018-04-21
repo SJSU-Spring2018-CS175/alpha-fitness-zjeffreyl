@@ -48,10 +48,15 @@
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
 
-        <activity android:name=".Profile"
-            android:screenOrientation="portrait">
-        </activity>
-        <activity android:name=".LandscapeRecordWorkout"></activity>
+        <activity
+            android:name=".Profile"
+            android:screenOrientation="portrait"></activity>
+        <activity android:name=".LandscapeRecordWorkout" />
+
+        <service
+            android:name=".MyServices"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>
