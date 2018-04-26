@@ -25,6 +25,8 @@ import android.location.LocationManager;
 import android.nfc.Tag;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -86,6 +88,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int MilliSeconds, Seconds, Minutes;
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
     public static Handler handler;
+    //public static Handler handlerDistance;
     //Distance
     TextView distanceUI;
 
@@ -125,6 +128,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         getLocationPermission();
+        recordButton = (Button) findViewById(R.id.recordButton);
+        if(MyServices.beginStates == 0){
+            state = recordState.REST;
+            recordButton.setText("START");
+        }else if(MyServices.beginStates == 1){
+            state = recordState.START;
+            recordButton.setText("STOP");
+        }else{
+            state = recordState.STOP;
+            recordButton.setText("RESET");
+        }
         userDBHelper = new UserDBHelper(this);
         workoutHeading = (TextView)findViewById(R.id.recordworkoutheading);
         profileButton = (ImageButton) findViewById(R.id.profile);
@@ -139,6 +153,24 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     "Fail to bind the remote service.", Toast.LENGTH_LONG).show();
         }
 
+        duration = (TextView) findViewById(R.id.duration);
+        distanceUI = (TextView) findViewById(R.id.distance);
+        handler = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                duration.setText((String)msg.obj);
+            }
+        };
+
+        /*handlerDistance = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                distanceUI.setText((String)msg.obj);
+            }
+        };*/
+
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -147,20 +179,22 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
         //Stopwatch
-        recordButton = (Button) findViewById(R.id.recordButton);
         recordButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 //Start goes to stop
-                if (state == recordState.START) {
-                    //Everything that happens at stop here
-                    //TimeBuff += MillisecondTime;
-                    handler.removeCallbacks(runnable);
-                    running = false;
+                if (state == recordState.REST) {
+                    try {
+                        remoteService.startTime();
+
+                    }catch(RemoteException e){
+                        e.printStackTrace();
+                    }
+                    running = true;
                     //Option to Reset
-                    recordButton.setText("Reset");
-                    state = recordState.STOP;
-                } else
+                    state = recordState.START;
+                    recordButton.setText("STOP");
+                }else
                     //Stop goes to rest
                     if (state == recordState.STOP) {
                         //Everything that happens at start here
@@ -173,24 +207,25 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         duration.setText("00:00:00");
                         distanceUI.setText("0.00M");
                         //Option to Start
-                        recordButton.setText("Start");
                         state = recordState.REST;
+                        recordButton.setText("Start");
                     }
                     //Rest goes to start
                     else {
                         StartTime = SystemClock.uptimeMillis();
-                        handler.postDelayed(runnable, 0);
-                        running = true;
-                        //Option to stop
-                        recordButton.setText("Stop");
-                        //lerp camera lock
-                        state = recordState.START;
+                        try {
+                            remoteService.stopTime();
+                        }catch(RemoteException e){
+                            e.printStackTrace();
+                        }
+                        running = false;
+                        state = recordState.STOP;
+                        recordButton.setText("RESET");
                     }
             }
         });
-        duration = (TextView) findViewById(R.id.duration);
-        distanceUI = (TextView) findViewById(R.id.distance);
-        handler = new Handler();
+        /*duration = (TextView) findViewById(R.id.duration);
+        distanceUI = (TextView) findViewById(R.id.distance);*/
 
         displayDatabaseInfo();
     }
@@ -254,7 +289,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public Runnable runnable = new Runnable() {
+    /*public Runnable runnable = new Runnable() {
         @Override
         public void run() {
             MillisecondTime = SystemClock.uptimeMillis() - StartTime;
@@ -276,7 +311,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             distanceUI.setText("" + f.format(distance) + "m");
             handler.postDelayed(this, 0);
         }
-    };
+    };*/
 
     private void drawPolyLine(){
         LatLng src =  new LatLng(coordinates.get(coordinates.size()-4).latitude, coordinates.get(coordinates.size()-4).longitude);
