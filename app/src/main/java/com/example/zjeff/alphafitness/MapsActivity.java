@@ -64,7 +64,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener, SensorEventListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback{
 
     private GoogleMap mMap;
     private static final String TAG = "MapActivity";
@@ -73,7 +73,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Boolean mLocationPermissionGranted = false;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
     private FusedLocationProviderClient mFusedLocationProviderClient;
-    private static final float DEFAULT_ZOOM = 23f;
+    private static final float DEFAULT_ZOOM = 20f;
     public boolean update = false;
     TextView workoutHeading;
 
@@ -88,6 +88,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int MilliSeconds, Seconds, Minutes;
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
     public static Handler handler;
+    public static Handler GoogleMapHandler = new Handler();
     //public static Handler handlerDistance;
     //Distance
     TextView distanceUI;
@@ -110,15 +111,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             remoteService = IMyAidlInterface.Stub.asInterface((IBinder) service);
-            Toast.makeText(MapsActivity.this,
-                    "Remote Service connected.", Toast.LENGTH_LONG).show();
+           // Toast.makeText(MapsActivity.this,
+             //       "Remote Service connected.", Toast.LENGTH_LONG).show();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             remoteService = null;
-            Toast.makeText(MapsActivity.this,
-                    "Remote Service disconnected.", Toast.LENGTH_LONG).show();
+            //Toast.makeText(MapsActivity.this,
+              //      "Remote Service disconnected.", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -155,6 +156,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         duration = (TextView) findViewById(R.id.duration);
         distanceUI = (TextView) findViewById(R.id.distance);
+
         handler = new Handler(){
             @Override
             public void handleMessage(Message msg) {
@@ -162,6 +164,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 duration.setText((String)msg.obj);
             }
         };
+
 
         /*handlerDistance = new Handler(){
             @Override
@@ -186,6 +189,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (state == recordState.REST) {
                     try {
                         remoteService.startTime();
+                        GoogleMapHandler.postDelayed(runnable, 1000);
 
                     }catch(RemoteException e){
                         e.printStackTrace();
@@ -199,10 +203,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     if (state == recordState.STOP) {
                         //Everything that happens at start here
                         clearDataValues();
-                        MillisecondTime = 0L;
-                        Seconds = 0;
-                        Minutes = 0;
-                        MilliSeconds = 0;
+                        try {
+                            remoteService.restTime();
+                        }catch(RemoteException e){
+                            e.printStackTrace();
+                        }
                         mMap.clear();
                         duration.setText("00:00:00");
                         distanceUI.setText("0.00M");
@@ -224,50 +229,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
             }
         });
-        /*duration = (TextView) findViewById(R.id.duration);
-        distanceUI = (TextView) findViewById(R.id.distance);*/
+        duration = (TextView) findViewById(R.id.duration);
+        distanceUI = (TextView) findViewById(R.id.distance);
 
         displayDatabaseInfo();
-    }
-
-
-    @Override
-    public void onLocationChanged(Location location) {
-        if(state == recordState.START) {
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            moveCamera(latLng, DEFAULT_ZOOM);
-            coordinates.add(latLng);
-            update = true;
-        }
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String s) {
-    }
-
-    @Override
-    public void onProviderDisabled(String s) {
-
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        if(running){
-            stepsTaken += sensorEvent.values[0];
-            caloriesBurned += sensorEvent.values[0] * caloriesPerStep;
-            Toast.makeText(this,"" + caloriesBurned, Toast.LENGTH_SHORT).show();
-            distance += sensorEvent.values[0] * stepToMeters;
-        }
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
     }
 
     //record states
@@ -278,16 +243,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     ;
     public recordState state = recordState.REST;
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        if(countSensor != null){
-            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
-        }else{
-            Toast.makeText(this, "Sensor not found", Toast.LENGTH_SHORT).show();
+    Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d("AAAAAAAAAAAAAAAA", "OUTSIDE" );
+            if(mMap.getMyLocation() != null) {
+                coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
+                if(coordinates.size() > 2) {
+                    drawPolyLine();
+                }
+            }
+            GoogleMapHandler.postDelayed(runnable, 1000);
+
         }
-    }
+    };
 
     /*public Runnable runnable = new Runnable() {
         @Override
@@ -314,13 +283,33 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     };*/
 
     private void drawPolyLine(){
-        LatLng src =  new LatLng(coordinates.get(coordinates.size()-4).latitude, coordinates.get(coordinates.size()-4).longitude);
+        LatLng src =  new LatLng(coordinates.get(coordinates.size()-2).latitude, coordinates.get(coordinates.size()-2).longitude);
         LatLng des =  new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude);
-        Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(3).color(Color.BLUE).geodesic(true));
+        Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(6).color(Color.BLUE).geodesic(true));
+        Toast.makeText(this, "Maps Activity Polyline", Toast.LENGTH_SHORT).show();
     }
 
     private void getDeviceLocation() {
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        try{
+            if(mLocationPermissionGranted){
+                Task location = mFusedLocationProviderClient.getLastLocation();
+                location.addOnCompleteListener(new OnCompleteListener() {
+                    @Override
+                    public void onComplete(@NonNull Task task) {
+                        if(task.isSuccessful()){
+                            Location currentLocation = (Location) task.getResult();
+                            moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM);
+                        }else{
+                            Toast.makeText(MapsActivity.this, "unable to provide current location", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        }catch(SecurityException e){
+            Log.e(TAG, "getDeviceLocation: Security Exception");
+        }
+        /*locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         Criteria criteria = new Criteria();
         String provider = locationManager.getBestProvider(criteria, true);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -334,8 +323,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
         Location location = locationManager.getLastKnownLocation(provider);
-        moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), 17f);
-        locationManager.requestLocationUpdates(provider, 1000, 0, this);
+        if(location != null) {
+            moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), DEFAULT_ZOOM);
+        }*/
     }
 
     private void drawMarker(Location location){
@@ -417,20 +407,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return;
             }
             mMap.setMyLocationEnabled(true);
-        }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if(state != recordState.START){
-            if(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                /*LandscapeRecordWorkout landscapeRecordWorkout = new LandscapeRecordWorkout();
-                FragmentManager fm = getFragmentManager();
-                FragmentTransaction fragmentTransaction = fm.beginTransaction();
-                fragmentTransaction.replace(android.R.id.content, landscapeRecordWorkout).commit();*/
-                startActivity(new Intent(this, LandscapeRecordWorkout.class));
-            }
         }
     }
 

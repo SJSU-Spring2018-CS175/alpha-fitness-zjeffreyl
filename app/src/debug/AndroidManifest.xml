@@ -3,7 +3,7 @@
 
     <application>
         <service
-            android:name="com.example.zjeff.alphafitness.MyService"
+            android:name="com.example.zjeff.alphafitness.MyServices"
             android:enabled="true"
             android:exported="true"></service>
     </application>
