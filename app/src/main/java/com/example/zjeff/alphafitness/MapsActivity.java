@@ -189,8 +189,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (state == recordState.REST) {
                     try {
                         remoteService.startTime();
-                        GoogleMapHandler.postDelayed(runnable, 1000);
-
+                        //GoogleMapHandler.postDelayed(runnable, 1000);
+                        GoogleMapHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                if(mMap.getMyLocation() != null) {
+                                    coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
+                                    if(coordinates.size() > 2) {
+                                        drawPolyLine();
+                                    }
+                                }
+                            }
+                        }, 1000);
                     }catch(RemoteException e){
                         e.printStackTrace();
                     }
@@ -202,14 +212,15 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //Stop goes to rest
                     if (state == recordState.STOP) {
                         //Everything that happens at start here
-                        clearDataValues();
+                        //clearDataValues();
                         try {
                             remoteService.restTime();
                         }catch(RemoteException e){
                             e.printStackTrace();
                         }
+                        coordinates.clear();
                         mMap.clear();
-                        duration.setText("00:00:00");
+                        duration.setText("00:00");
                         distanceUI.setText("0.00M");
                         //Option to Start
                         state = recordState.REST;
@@ -233,6 +244,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         distanceUI = (TextView) findViewById(R.id.distance);
 
         displayDatabaseInfo();
+
+        GoogleMapHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if(mMap.getMyLocation() != null) {
+                    coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
+                    if(coordinates.size() > 2) {
+                        drawPolyLine();
+                    }
+                }
+            }
+        }, 1000);
     }
 
     //record states
@@ -240,23 +263,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         START, STOP, REST
     }
 
-    ;
     public recordState state = recordState.REST;
 
-    Runnable runnable = new Runnable() {
+    /*Runnable runnable = new Runnable() {
         @Override
         public void run() {
-            Log.d("AAAAAAAAAAAAAAAA", "OUTSIDE" );
             if(mMap.getMyLocation() != null) {
                 coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
                 if(coordinates.size() > 2) {
                     drawPolyLine();
                 }
             }
-            GoogleMapHandler.postDelayed(runnable, 1000);
+           //GoogleMapHandler.postDelayed(runnable, 1000);
 
         }
-    };
+    };*/
 
     /*public Runnable runnable = new Runnable() {
         @Override
@@ -286,7 +307,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         LatLng src =  new LatLng(coordinates.get(coordinates.size()-2).latitude, coordinates.get(coordinates.size()-2).longitude);
         LatLng des =  new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude);
         Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(6).color(Color.BLUE).geodesic(true));
-        Toast.makeText(this, "Maps Activity Polyline", Toast.LENGTH_SHORT).show();
     }
 
     private void getDeviceLocation() {
@@ -309,23 +329,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }catch(SecurityException e){
             Log.e(TAG, "getDeviceLocation: Security Exception");
         }
-        /*locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        String provider = locationManager.getBestProvider(criteria, true);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location location = locationManager.getLastKnownLocation(provider);
-        if(location != null) {
-            moveCamera(new LatLng(location.getLatitude(), location.getLongitude()), DEFAULT_ZOOM);
-        }*/
     }
 
     private void drawMarker(Location location){
@@ -410,13 +413,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public void clearDataValues(){
-        coordinates.clear();
-        stepsTaken =0;
-        distance = 0;
-        caloriesBurned = 0;
-    }
-
     public void insertUserData(){
         SQLiteDatabase db = userDBHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -474,5 +470,14 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            if (state == recordState.STOP) {
+                Intent i = new Intent(MapsActivity.this, LandscapeRecordWorkout.class);
+                startActivity(i);
+            }
+        }
+    }
 }

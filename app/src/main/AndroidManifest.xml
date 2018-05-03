@@ -51,7 +51,9 @@
         <activity
             android:name=".Profile"
             android:screenOrientation="portrait"></activity>
-        <activity android:name=".LandscapeRecordWorkout" />
+
+        <activity android:name=".LandscapeRecordWorkout"
+            android:configChanges="orientation|screenSize|keyboardHidden"></activity>
 
         <service
             android:name=".MyServices"

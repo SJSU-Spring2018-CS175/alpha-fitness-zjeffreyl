@@ -28,14 +28,16 @@ public class LandscapeRecordWorkout extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("LandscapeRecord", "Start Landscape");
         setContentView(R.layout.fragment_landscape_record_workout);
     }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
+        Log.d("LandscapeRecord", "orientation sensed");
         if(newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
-            Log.d("LandscapeRecord", "orientation");
+            Log.d("LandscapeRecord", "orientation changing");
             startActivity(new Intent(this, MapsActivity.class));
         }
     }
