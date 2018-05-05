@@ -77,7 +77,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean update = false;
     TextView workoutHeading;
 
-    private ArrayList<LatLng> coordinates = new ArrayList<>();
+    //private ArrayList<LatLng> coordinates = new ArrayList<>();
     SensorManager sensorManager;
     boolean running = false;
 
@@ -88,6 +88,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     int MilliSeconds, Seconds, Minutes;
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
     public static Handler handler;
+    static Handler distanceHandler;
     public static Handler GoogleMapHandler = new Handler();
     //public static Handler handlerDistance;
     //Distance
@@ -165,14 +166,31 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         };
 
-
-        /*handlerDistance = new Handler(){
+        distanceHandler = new Handler()
+        {
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
-                distanceUI.setText((String)msg.obj);
+                float distance = (float) msg.obj;
+                distanceUI.setText(String.format("%.3f", distance));
             }
-        };*/
+        };
+        GoogleMapHandler = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                PolylineOptions polylineOptions = new PolylineOptions().width(10).color(Color.BLUE).geodesic(true);
+                for (int i = 0; i < MyServices.coordinates.size(); i++){
+                    LatLng point = MyServices.coordinates.get(i);
+                    polylineOptions.add(point);
+                }
+                if(mMap.getMyLocation() != null) {
+                    MyServices.coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
+                    Polyline line = mMap.addPolyline(polylineOptions);
+                    line.setPoints(MyServices.coordinates);
+                }
+            }
+        };
 
         profileButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -190,17 +208,18 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     try {
                         remoteService.startTime();
                         //GoogleMapHandler.postDelayed(runnable, 1000);
-                        GoogleMapHandler.postDelayed(new Runnable() {
+                        /*GoogleMapHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 if(mMap.getMyLocation() != null) {
                                     coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
+                                    Log.d("AAAA", coordinates.size() + "");
                                     if(coordinates.size() > 2) {
                                         drawPolyLine();
                                     }
                                 }
                             }
-                        }, 1000);
+                        }, 1000);*/
                     }catch(RemoteException e){
                         e.printStackTrace();
                     }
@@ -218,7 +237,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         }catch(RemoteException e){
                             e.printStackTrace();
                         }
-                        coordinates.clear();
+                        MyServices.coordinates.clear();
                         mMap.clear();
                         duration.setText("00:00");
                         distanceUI.setText("0.00M");
@@ -245,7 +264,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //displayDatabaseInfo();
 
-        GoogleMapHandler.postDelayed(new Runnable() {
+        /*GoogleMapHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
                 if(mMap.getMyLocation() != null) {
@@ -255,7 +274,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
                 }
             }
-        }, 1000);
+        }, 1000);*/
     }
 
     //record states
@@ -303,11 +322,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     };*/
 
-    private void drawPolyLine(){
+    /*private void drawPolyLine(){
         LatLng src =  new LatLng(coordinates.get(coordinates.size()-2).latitude, coordinates.get(coordinates.size()-2).longitude);
         LatLng des =  new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude);
         Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(6).color(Color.BLUE).geodesic(true));
-    }
+    }*/
 
     private void getDeviceLocation() {
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);

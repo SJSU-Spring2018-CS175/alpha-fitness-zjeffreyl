@@ -43,25 +43,41 @@ import java.util.ArrayList;
 
 import static android.content.ContentValues.TAG;
 
-public class MyServices extends Service implements OnMapReadyCallback{
+public class MyServices extends Service implements OnMapReadyCallback, SensorEventListener{
     IMyAidlInterface.Stub binder;
+
+    SensorManager sensorManager;
+    Sensor countSensor;
 
     private GoogleMap mMap;
     int MilliSeconds, Seconds, Minutes;
     long MillisecondTime, StartTime, UpdateTime, TimeBuff = 0L;
-    SensorManager sensorManager;
     public boolean update = false;
+
     public int stepsTaken = 0;
     public float distance = 0f;
     float stepToMeters = 0.7f;
     float caloriesBurned = 0;
     float caloriesPerStep = 0.04f;
     LocationManager locationManager;
+    Location location;
     private static final float DEFAULT_ZOOM = 20f;
-    private ArrayList<LatLng> coordinates = new ArrayList<>();
+    public static ArrayList<LatLng> coordinates = new ArrayList<>();
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
     public static int beginStates;
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if(sensorEvent.values[0] == 1 && beginStates == 1){
+            stepsTaken++;
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
 
     //record states
     public enum recordState {
@@ -70,42 +86,46 @@ public class MyServices extends Service implements OnMapReadyCallback{
 
     public MapsActivity.recordState state = MapsActivity.recordState.REST;
 
-    /*public MyServices() {
-        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-    }*/
-
     @Override
     public void onCreate() {
         super.onCreate();
+        sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         binder = new IMyAidlInterface.Stub() {
             @Override
             public void startTime() throws RemoteException {
                 StartTime = SystemClock.uptimeMillis();
                 beginStates = 1;
+                countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
+                if (countSensor != null) {
+                    sensorManager.registerListener(MyServices.this, countSensor, SensorManager.SENSOR_DELAY_UI);
+                } else {
+                    Toast.makeText(MyServices.this, "Sensor not found", Toast.LENGTH_SHORT).show();
+                }
                 MapsActivity.handler.postDelayed(runnable, 10);
+                MapsActivity.GoogleMapHandler.postDelayed(polyLine, 10);
             }
 
             @Override
             public void stopTime() throws RemoteException {
                 MapsActivity.handler.removeCallbacks(runnable);
+                MapsActivity.GoogleMapHandler.removeCallbacks(polyLine);
                 beginStates = 2;
             }
 
             @Override
             public void restTime() throws RemoteException {
+                //Time
                 MillisecondTime = 0L;
                 Seconds = 0;
                 Minutes = 0;
                 MilliSeconds = 0;
+                //Distance
+                stepsTaken = 0;
+                distance = 0f;
+                coordinates.clear();
                 beginStates = 0;
             }
         };
-        /*Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_DETECTOR);
-        if (countSensor != null) {
-            sensorManager.registerListener(this, countSensor, SensorManager.SENSOR_DELAY_UI);
-        } else {
-            Toast.makeText(this, "Sensor not found", Toast.LENGTH_SHORT).show();
-        }*/
     }
 
     Runnable runnable = new Runnable() {
@@ -124,15 +144,42 @@ public class MyServices extends Service implements OnMapReadyCallback{
             MapsActivity.handler.sendMessage(msg);
             MapsActivity.handler.postDelayed(this, 1000);
 
-            /*DecimalFormat f = new DecimalFormat("##.0");
-            String distanceUI = "" + f.format(distance) + "m";
-            Message msg1 = new Message();
-            msg1.obj = distanceUI;
-            MapsActivity.handlerDistance.sendMessage(msg1);
-            MapsActivity.handlerDistance.postDelayed(this,0);*/
+            Message stepsTakenMessage = new Message();
+            float distance = stepsTaken * stepToMeters;
+            distance *= 0.0006213;
+            stepsTakenMessage.obj = distance;
+            MapsActivity.distanceHandler.sendMessage(stepsTakenMessage);
         }
     };
 
+    Runnable polyLine = new Runnable() {
+        @Override
+        public void run(){
+            locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+            Criteria criteria = new Criteria();
+            String locationProvider = locationManager.getBestProvider(criteria, false);
+
+
+            if (ActivityCompat.checkSelfPermission(MyServices.this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED
+                    && ActivityCompat.checkSelfPermission(MyServices.this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                return;
+            }
+
+            location = locationManager.getLastKnownLocation(locationProvider);
+            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+            //coordinates.add(latLng);
+            Message locationMsg = new Message();
+            locationMsg.obj = coordinates;
+            MapsActivity.GoogleMapHandler.sendMessage(locationMsg);
+            MapsActivity.GoogleMapHandler.postDelayed(this, 10);
+        }
+    };
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -192,10 +239,6 @@ public class MyServices extends Service implements OnMapReadyCallback{
         super.onConfigurationChanged(newConfig);
         if(state != MapsActivity.recordState.START){
             if(newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE){
-                /*LandscapeRecordWorkout landscapeRecordWorkout = new LandscapeRecordWorkout();
-                FragmentManager fm = getFragmentManager();
-                FragmentTransaction fragmentTransaction = fm.beginTransaction();
-                fragmentTransaction.replace(android.R.id.content, landscapeRecordWorkout).commit();*/
                 startActivity(new Intent(this, LandscapeRecordWorkout.class));
             }
         }
