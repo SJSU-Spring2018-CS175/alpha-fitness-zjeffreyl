@@ -243,7 +243,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         duration = (TextView) findViewById(R.id.duration);
         distanceUI = (TextView) findViewById(R.id.distance);
 
-        displayDatabaseInfo();
+        //displayDatabaseInfo();
 
         GoogleMapHandler.postDelayed(new Runnable() {
             @Override
@@ -432,7 +432,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_insert_dummy_data:
-                if(state == recordState.STOP){
+                if(state == recordState.STOP || state == recordState.REST){
+                    Toast.makeText(this, "Inserting", Toast.LENGTH_SHORT).show();
                     insertUserData();
                 }
                 return true;
@@ -449,26 +450,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
-    private void displayDatabaseInfo() {
-        // To access our database, we instantiate our subclass of SQLiteOpenHelper
-        // and pass the context, which is the current activity.
-        UserDBHelper mDbHelper = new UserDBHelper(this);
-        // Create and/or open a database to read from it
-        SQLiteDatabase db = mDbHelper.getReadableDatabase();
-        // Perform this raw SQL query "SELECT * FROM pets"
-        // to get a Cursor that contains all rows from the pets table.
-        Cursor cursor = db.rawQuery("SELECT * FROM " + UserContract.UserEntry.TABLE_NAME, null);
-        try {
-            // Display the number of rows in the Cursor (which reflects the number of rows in the
-            // pets table in the database).
-            TextView displayView = (TextView) findViewById(R.id.recordworkoutheading);
-            displayView.setText("Number of rows in user database table: " + cursor.getCount());
-        } finally {
-            // Always close the cursor when you're done reading from it. This releases all its
-            // resources and makes it invalid.
-            cursor.close();
-        }
-    }
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {

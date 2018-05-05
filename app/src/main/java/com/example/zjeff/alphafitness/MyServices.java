@@ -176,7 +176,7 @@ public class MyServices extends Service implements OnMapReadyCallback{
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Toast.makeText(this, "Map is Ready HERE", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Map is Ready", Toast.LENGTH_SHORT).show();
         mMap = googleMap;
         getDeviceLocation();
         //mark location
@@ -186,19 +186,6 @@ public class MyServices extends Service implements OnMapReadyCallback{
         }
         mMap.setMyLocationEnabled(true);
     }
-
-    /*@Override
-    public void onSensorChanged(SensorEvent sensorEvent) {
-        stepsTaken += sensorEvent.values[0];
-        caloriesBurned += sensorEvent.values[0] * caloriesPerStep;
-        Toast.makeText(this, "" + caloriesBurned, Toast.LENGTH_SHORT).show();
-        distance += sensorEvent.values[0] * stepToMeters;
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int i) {
-
-    }*/
 
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
