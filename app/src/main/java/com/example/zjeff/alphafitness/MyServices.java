@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -199,20 +200,98 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
     };
 
     public void insertUserData(){
+        float currentDistanceAverage = 0;
+        float currentTimeAverage = 0;
+        float currentWorkoutsAverage = 0;
+        float currentCaloriesAverage = 0;
+
+        float currentDistanceAllTime = 0;
+        float currentTimeAllTime = 0;
+        float currentWorkoutsAllTime = 0;
+        float currentCaloriesAllTime = 0;
+        int currentId = 0;
+        //Get Data Values
+        UserDBHelper mDbHelper = new UserDBHelper(this);
+        SQLiteDatabase rdb = mDbHelper.getReadableDatabase();
+
+        String[] projection = {UserContract.UserEntry._ID, UserContract.UserEntry.COLUMN_NAME, UserContract.UserEntry.COLUMN_WEIGHT,
+                UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE, UserContract.UserEntry.COLUMN_TIME_AVERAGE, UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE,
+                UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME, UserContract.UserEntry.COLUMN_TIME_ALL_TIME,
+                UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME, UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME};
+
+        Cursor cursor = rdb.query(UserContract.UserEntry.TABLE_NAME, projection, null, null, null, null, null);
+        try {
+            int idColumnIndex = cursor.getColumnIndex(UserContract.UserEntry._ID);
+            int nameColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_NAME);
+            int weightColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_WEIGHT);
+
+            int distanceAverageColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE);
+            int timeAverageColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_TIME_AVERAGE);
+            int workoutsAverageColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE);
+            int caloriesAverageColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE);
+            //index of column for all time
+            int distanceAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME);
+            int timeAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_TIME_ALL_TIME);
+            int workoutAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME);
+            int caloriesAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME);
+            cursor.moveToFirst();
+
+            workoutsAverage++;
+            workoutsAllTime = workoutsAverage;
+            while(cursor.moveToNext()) {
+                currentId = cursor.getInt(idColumnIndex);
+                String currentName = cursor.getString(nameColumnIndex);
+                int currentWeight = cursor.getInt(weightColumnIndex);
+
+                //retrieving sum
+                currentDistanceAverage += cursor.getFloat(distanceAverageColumnIndex);
+                currentTimeAverage += cursor.getFloat(timeAverageColumnIndex);
+                currentWorkoutsAverage += cursor.getFloat(workoutsAverageColumnIndex);
+                currentCaloriesAverage += cursor.getFloat(caloriesAverageColumnIndex);
+
+                currentDistanceAllTime = cursor.getFloat(distanceAllTimeColumnIndex);
+                currentTimeAllTime = cursor.getFloat(timeAllTimeColumnIndex);
+                currentCaloriesAllTime = cursor.getFloat(caloriesAllTimeColumnIndex);
+                currentWorkoutsAllTime = cursor.getFloat(workoutAllTimeColumnIndex);
+            }
+            Log.d("AAA", "" + currentId + 1);
+            //calculating new data and divide to get average
+            currentDistanceAverage = (currentDistanceAverage + (stepsTaken * stepToMeters))/(currentId + 1);
+            currentTimeAverage = (currentTimeAverage + Seconds)/(currentId + 1);
+            currentWorkoutsAverage = (currentWorkoutsAverage + workoutsAverage)/(currentId + 1);
+            currentCaloriesAverage = (currentCaloriesAverage + (stepsTaken * caloriesPerStep))/(currentId + 1);
+
+            if(stepsTaken * stepToMeters > currentDistanceAllTime){
+                currentDistanceAllTime = stepsTaken * stepToMeters;
+            }
+            if(Seconds > currentTimeAllTime){
+                currentTimeAllTime = Seconds;
+            }
+            if(stepsTaken * caloriesPerStep > currentCaloriesAllTime){
+                currentCaloriesAllTime = stepsTaken * caloriesPerStep;
+            }
+            if(workoutsAllTime > currentWorkoutsAllTime){
+                currentDistanceAllTime = workoutsAllTime;
+            }
+
+        }finally {
+            // Always close the cursor when you're done reading from it. This releases all its
+            // resources and makes it invalid.
+            cursor.close();
+        }
+
         SQLiteDatabase db = userDBHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
-        workoutsAverage++;
-        workoutsAllTime = workoutsAverage;
         values.put(UserContract.UserEntry.COLUMN_NAME, "Jeff");
         values.put(UserContract.UserEntry.COLUMN_WEIGHT, "160");
-        values.put(UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE, (stepsTaken * stepToMeters));
-        values.put(UserContract.UserEntry.COLUMN_TIME_AVERAGE, Seconds);
-        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE,workoutsAverage);
-        values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, stepsTaken * caloriesPerStep);
-        values.put(UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME, stepsTaken * stepToMeters);
-        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME, workoutsAllTime);
-        values.put(UserContract.UserEntry.COLUMN_TIME_ALL_TIME, Seconds);
-        values.put(UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME, stepsTaken * caloriesPerStep);
+        values.put(UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE, currentDistanceAverage);
+        values.put(UserContract.UserEntry.COLUMN_TIME_AVERAGE, currentTimeAverage);
+        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE,currentWorkoutsAverage);
+        values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, currentCaloriesAverage);
+        values.put(UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME, currentDistanceAllTime);
+        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME, currentWorkoutsAllTime);
+        values.put(UserContract.UserEntry.COLUMN_TIME_ALL_TIME, currentTimeAllTime);
+        values.put(UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME, currentCaloriesAllTime);
         db.insert(UserContract.UserEntry.TABLE_NAME, null, values);
     }
 

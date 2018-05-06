@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -80,11 +81,12 @@ public class Profile extends AppCompatActivity {
             int timeAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_TIME_ALL_TIME);
             int workoutAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME);
             int caloriesAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME);
-            //Toast.makeText(this, cursor.getCount(), Toast.LENGTH_SHORT).show();
+
             while(cursor.moveToNext()) {
                 int currentId = cursor.getInt(idColumnIndex);
                 String currentName = cursor.getString(nameColumnIndex);
                 int currentWeight = cursor.getInt(weightColumnIndex);
+
 
                 int currentDistanceAverage = cursor.getInt(distanceAverageColumnIndex);
                 int currentTimeAverage = cursor.getInt(timeAverageColumnIndex);
@@ -119,4 +121,6 @@ public class Profile extends AppCompatActivity {
             cursor.close();
         }
     }
+
+
 }
