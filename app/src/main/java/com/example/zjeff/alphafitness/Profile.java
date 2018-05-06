@@ -1,5 +1,6 @@
 package com.example.zjeff.alphafitness;
 
+import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -55,7 +56,6 @@ public class Profile extends AppCompatActivity {
         displayDatabaseInfo();
     }
 
-
     private void displayDatabaseInfo() {
         UserDBHelper mDbHelper = new UserDBHelper(this);
         SQLiteDatabase db = mDbHelper.getReadableDatabase();
@@ -80,7 +80,7 @@ public class Profile extends AppCompatActivity {
             int timeAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_TIME_ALL_TIME);
             int workoutAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME);
             int caloriesAllTimeColumnIndex = cursor.getColumnIndex(UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME);
-
+            //Toast.makeText(this, cursor.getCount(), Toast.LENGTH_SHORT).show();
             while(cursor.moveToNext()) {
                 int currentId = cursor.getInt(idColumnIndex);
                 String currentName = cursor.getString(nameColumnIndex);
@@ -100,13 +100,15 @@ public class Profile extends AppCompatActivity {
                 weight.setText("" + currentWeight);
                 TextView gender = (TextView)findViewById(R.id.gender);
                 gender.setText("Male");
-                averageDistance.setText("" + currentDistanceAverage);
-                averageTime.setText("" + currentTimeAverage);
+                float  Minutes = currentTimeAverage / 60;
+                currentTimeAverage = currentTimeAverage % 60;
+                averageDistance.setText("" + currentDistanceAverage + " meters");
+                averageTime.setText("" + currentTimeAverage + " seconds");
                 averageWorkouts.setText("" + currentWorkoutsAverage);
                 averageCalories.setText("" + currentCaloriesAverage);
 
-                allTimeDistance.setText("" + currentDistanceAllTime);
-                allTimeTime.setText("" + currentTimeAllTime);
+                allTimeDistance.setText("" + currentDistanceAllTime + " meters");
+                allTimeTime.setText("" + currentTimeAllTime + " seconds");
                 allTimeWorkouts.setText("" + currentWorkoutsAllTime);
                 allTimeCalories.setText("" + currentCaloriesAllTime);
 

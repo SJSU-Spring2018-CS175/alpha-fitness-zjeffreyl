@@ -207,19 +207,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if (state == recordState.REST) {
                     try {
                         remoteService.startTime();
-                        //GoogleMapHandler.postDelayed(runnable, 1000);
-                        /*GoogleMapHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(mMap.getMyLocation() != null) {
-                                    coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
-                                    Log.d("AAAA", coordinates.size() + "");
-                                    if(coordinates.size() > 2) {
-                                        drawPolyLine();
-                                    }
-                                }
-                            }
-                        }, 1000);*/
                     }catch(RemoteException e){
                         e.printStackTrace();
                     }
@@ -261,20 +248,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
         duration = (TextView) findViewById(R.id.duration);
         distanceUI = (TextView) findViewById(R.id.distance);
-
-        //displayDatabaseInfo();
-
-        /*GoogleMapHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                if(mMap.getMyLocation() != null) {
-                    coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
-                    if(coordinates.size() > 2) {
-                        drawPolyLine();
-                    }
-                }
-            }
-        }, 1000);*/
     }
 
     //record states
@@ -283,50 +256,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public recordState state = recordState.REST;
-
-    /*Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            if(mMap.getMyLocation() != null) {
-                coordinates.add(new LatLng(mMap.getMyLocation().getLatitude(), mMap.getMyLocation().getLongitude()));
-                if(coordinates.size() > 2) {
-                    drawPolyLine();
-                }
-            }
-           //GoogleMapHandler.postDelayed(runnable, 1000);
-
-        }
-    };*/
-
-    /*public Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            MillisecondTime = SystemClock.uptimeMillis() - StartTime;
-            UpdateTime = TimeBuff + MillisecondTime;
-            Seconds = (int) (UpdateTime / 1000);
-            Minutes = Seconds / 60;
-            Seconds = Seconds % 60;
-            MilliSeconds = (int) (UpdateTime % 100);
-            if(update = true && state == recordState.START && coordinates.size() % 3 == 0){
-                if(coordinates.size() > 3) {
-                    drawPolyLine();
-                }
-                update = false;
-            }
-            duration.setText(String.format("" + String.format("%02d", Minutes) + ":" + String.format("%02d", Seconds)
-                    + ":" + String.format("%02d", MilliSeconds)));
-            //roundedDistance 0.00
-            DecimalFormat f = new DecimalFormat("##.0");
-            distanceUI.setText("" + f.format(distance) + "m");
-            handler.postDelayed(this, 0);
-        }
-    };*/
-
-    /*private void drawPolyLine(){
-        LatLng src =  new LatLng(coordinates.get(coordinates.size()-2).latitude, coordinates.get(coordinates.size()-2).longitude);
-        LatLng des =  new LatLng(coordinates.get(coordinates.size()-1).latitude, coordinates.get(coordinates.size()-1).longitude);
-        Polyline line = mMap.addPolyline(new PolylineOptions().add(src,des).width(6).color(Color.BLUE).geodesic(true));
-    }*/
 
     private void getDeviceLocation() {
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -411,7 +340,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Toast.makeText(this, "Map is Ready HERE", Toast.LENGTH_SHORT).show();
         mMap = googleMap;
         Log.d(TAG, "" + mLocationPermissionGranted);
         if (mLocationPermissionGranted) {
@@ -432,28 +360,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
-    public void insertUserData(){
+    /*public void insertUserData(){
         SQLiteDatabase db = userDBHelper.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(UserContract.UserEntry.COLUMN_NAME, "Jeff");
         values.put(UserContract.UserEntry.COLUMN_WEIGHT, "160");
         values.put(UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE, "30");
-        values.put(UserContract.UserEntry.COLUMN_TIME_AVERAGE,"20000");
+        values.put(UserContract.UserEntry.COLUMN_TIME_AVERAGE, Seconds);
         values.put(UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE,"1");
         values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, "50");
         values.put(UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME, "100");
         values.put(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME, "3");
         values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, "120");
         db.insert(UserContract.UserEntry.TABLE_NAME, null, values);
-    }
+    }*/
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.action_insert_dummy_data:
                 if(state == recordState.STOP || state == recordState.REST){
-                    Toast.makeText(this, "Inserting", Toast.LENGTH_SHORT).show();
-                    insertUserData();
+                    //insertUserData();
                 }
                 return true;
             case R.id.action_delete_all_entries:

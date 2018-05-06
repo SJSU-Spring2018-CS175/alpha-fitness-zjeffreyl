@@ -2,10 +2,13 @@ package com.example.zjeff.alphafitness;
 
 import android.Manifest;
 import android.app.Service;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.DatabaseUtils;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -27,6 +30,8 @@ import android.view.inputmethod.InputMethod;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.zjeff.alphafitness.data.UserContract;
+import com.example.zjeff.alphafitness.data.UserDBHelper;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -58,7 +63,12 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
     public float distance = 0f;
     float stepToMeters = 0.7f;
     float caloriesBurned = 0;
-    float caloriesPerStep = 0.04f;
+    float caloriesPerStep = 4f;
+
+    //Data
+    float workoutsAverage;
+    float workoutsAllTime;
+
     LocationManager locationManager;
     Location location;
     private static final float DEFAULT_ZOOM = 20f;
@@ -66,6 +76,7 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
     private FusedLocationProviderClient mFusedLocationProviderClient;
 
     public static int beginStates;
+    private UserDBHelper userDBHelper;
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
@@ -89,6 +100,7 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
     @Override
     public void onCreate() {
         super.onCreate();
+        userDBHelper = new UserDBHelper(this);
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         binder = new IMyAidlInterface.Stub() {
             @Override
@@ -107,6 +119,7 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
 
             @Override
             public void stopTime() throws RemoteException {
+                insertUserData();
                 MapsActivity.handler.removeCallbacks(runnable);
                 MapsActivity.GoogleMapHandler.removeCallbacks(polyLine);
                 beginStates = 2;
@@ -172,14 +185,36 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
             }
 
             location = locationManager.getLastKnownLocation(locationProvider);
-            LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
-            //coordinates.add(latLng);
-            Message locationMsg = new Message();
-            locationMsg.obj = coordinates;
-            MapsActivity.GoogleMapHandler.sendMessage(locationMsg);
-            MapsActivity.GoogleMapHandler.postDelayed(this, 10);
+            if(location != null) {
+                LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+                //coordinates.add(latLng);
+                Message locationMsg = new Message();
+                locationMsg.obj = coordinates;
+                MapsActivity.GoogleMapHandler.sendMessage(locationMsg);
+                MapsActivity.GoogleMapHandler.postDelayed(this, 10);
+            }
+
         }
     };
+
+    public void insertUserData(){
+        SQLiteDatabase db = userDBHelper.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        workoutsAverage++;
+        workoutsAllTime = workoutsAverage;
+        values.put(UserContract.UserEntry.COLUMN_NAME, "Jeff");
+        values.put(UserContract.UserEntry.COLUMN_WEIGHT, "160");
+        values.put(UserContract.UserEntry.COLUMN_DISTANCE_AVERAGE, (stepsTaken * stepToMeters));
+        values.put(UserContract.UserEntry.COLUMN_TIME_AVERAGE, Seconds);
+        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_AVERAGE,workoutsAverage);
+        values.put(UserContract.UserEntry.COLUMN_CALORIES_AVERAGE, stepsTaken * caloriesPerStep);
+        values.put(UserContract.UserEntry.COLUMN_DISTANCE_ALL_TIME, stepsTaken * stepToMeters);
+        values.put(UserContract.UserEntry.COLUMN_WORKOUTS_ALL_TIME, workoutsAllTime);
+        values.put(UserContract.UserEntry.COLUMN_TIME_ALL_TIME, Seconds);
+        values.put(UserContract.UserEntry.COLUMN_CALORIES_ALL_TIME, stepsTaken * caloriesPerStep);
+        db.insert(UserContract.UserEntry.TABLE_NAME, null, values);
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -205,7 +240,6 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
                 public void onComplete(@NonNull Task task) {
                     if (task.isSuccessful()) {
                         Location currentLocation = (Location) task.getResult();
-                        Toast.makeText(MyServices.this, "Location: " + currentLocation.getLongitude(), Toast.LENGTH_SHORT).show();
                         moveCamera(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), DEFAULT_ZOOM);
                     } else {
                         Toast.makeText(MyServices.this, "unable to provide current location", Toast.LENGTH_SHORT).show();
@@ -223,7 +257,6 @@ public class MyServices extends Service implements OnMapReadyCallback, SensorEve
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Toast.makeText(this, "Map is Ready", Toast.LENGTH_SHORT).show();
         mMap = googleMap;
         getDeviceLocation();
         //mark location
