@@ -6,113 +6,296 @@
     tools:context="com.example.zjeff.alphafitness.LandscapeRecordWorkout">
 
     <!-- TODO: Update blank fragment layout -->
-
     <LinearLayout
-        android:layout_width="582dp"
-        android:layout_height="298dp"
+
+        android:layout_width="match_parent"
+
+        android:layout_height="match_parent"
+
         android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+
+        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteY="0dp">
+
 
         <LinearLayout
+
             android:layout_width="match_parent"
-            android:layout_height="66dp"
-            android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/WorkoutDetails"
-                android:layout_width="141dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/common_google_signin_btn_icon_dark_normal_background"
-                android:gravity="center"
-                android:text="Workout Details"
-                android:textColor="@android:color/black"
-                android:textSize="20dp" />
+            android:layout_height="wrap_content"
 
-            <TextView
-                android:id="@+id/AverageHeading"
-                android:layout_width="1dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#D3D3D3"
-                android:text="AVG" />
+            android:orientation="horizontal"
 
-            <TextView
-                android:id="@+id/AverageTime"
-                android:layout_width="103dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#D3D3D3"
-                android:gravity="center"
-                android:text="0:00"
-                android:textSize="50dp"
-                android:textStyle="bold" />
+            >
 
-            <TextView
-                android:id="@+id/minmile"
-                android:layout_width="6dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="#D3D3D3"
-                android:gravity="bottom"
-                android:text="min/mile" />
 
             <LinearLayout
-                android:layout_width="171dp"
+
+                android:layout_width="wrap_content"
+
+                android:layout_height="wrap_content"
+
+                android:layout_gravity="center">
+
+
+                <TextView
+
+                    android:layout_width="0dp"
+
+                    android:layout_height="65dp"
+
+                    android:layout_marginLeft="10dp"
+
+                    android:layout_weight="1"
+
+                    android:background="#D3D3D3"
+                    android:gravity="center"
+                    android:text="WORKOUT DETAILS"
+
+                    android:textAlignment="center"
+
+                    android:textSize="15sp" />
+
+            </LinearLayout>
+
+            <View
+
+                android:layout_width="1dp"
+
+                android:layout_height="fill_parent"
+
+                android:layout_marginLeft="10dp"
+
+                android:background="@color/colorPrimaryDark" />
+
+
+            <RelativeLayout
+
+                android:layout_width="0dp"
+
                 android:layout_height="match_parent"
+
+                android:layout_weight="1">
+
+
+                <TextView
+
+                    android:id="@+id/detailAvgLabel"
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="wrap_content"
+
+                    android:paddingStart="5dp"
+
+                    android:text="AVG" />
+
+
+                <TextView
+
+                    android:id="@+id/avgValue"
+
+                    android:layout_width="123dp"
+
+                    android:layout_height="wrap_content"
+
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="-2dp"
+                    android:layout_toEndOf="@+id/detailAvgLabel"
+
+                    android:layout_toStartOf="@+id/detailAvgUnit"
+
+                    android:background="#D3D3D3"
+
+                    android:text="0:00"
+
+                    android:textAlignment="center"
+
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
+
+
+                <TextView
+
+                    android:id="@+id/detailAvgUnit"
+
+                    android:layout_width="wrap_content"
+
+                    android:layout_height="43dp"
+
+                    android:layout_alignParentBottom="true"
+
+                    android:layout_alignParentEnd="true"
+
+                    android:paddingEnd="5dp"
+
+                    android:text="min per Mile" />
+
+
+            </RelativeLayout>
+
+
+            <View
+
+                android:layout_width="1dp"
+
+                android:layout_height="fill_parent"
+
+                android:layout_marginLeft="10dp"
+
+                android:background="@color/colorPrimaryDark" />
+
+
+            <LinearLayout
+
+                android:layout_width="0dp"
+
+                android:layout_height="match_parent"
+
                 android:layout_weight="1"
+
                 android:orientation="vertical">
 
+
                 <LinearLayout
+
                     android:layout_width="match_parent"
-                    android:layout_height="30dp"
+
+                    android:layout_height="0dp"
+
+                    android:layout_weight="1"
+
                     android:orientation="horizontal">
 
+
                     <TextView
-                        android:id="@+id/MaxHeading"
-                        android:layout_width="109dp"
-                        android:layout_height="match_parent"
+
+                        android:id="@+id/detailMaxLabel"
+
+                        android:layout_width="0dp"
+
+                        android:layout_height="wrap_content"
+
                         android:layout_weight="1"
+
+                        android:gravity="center"
+
                         android:text="MAX" />
 
+
                     <TextView
-                        android:id="@+id/Max"
-                        android:layout_width="230dp"
-                        android:layout_height="match_parent"
+
+                        android:id="@+id/maxValue"
+
+                        android:layout_width="0dp"
+
+                        android:layout_height="wrap_content"
+
                         android:layout_weight="1"
-                        android:gravity="bottom"
-                        android:text="0:00 min/mile"
-                        android:textSize="25dp" />
+
+                        android:gravity="center"
+
+                        android:text="20:26"
+
+                        android:textStyle="bold" />
+
+
+                    <TextView
+
+                        android:id="@+id/detailMaxUnit"
+
+                        android:layout_width="0dp"
+
+                        android:layout_height="wrap_content"
+
+                        android:layout_weight="1"
+
+                        android:gravity="center"
+
+                        android:text="min per Mile" />
+
 
                 </LinearLayout>
+
+
+                <View
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="1dp"
+
+                    android:background="@color/colorPrimaryDark" />
 
                 <LinearLayout
+
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
+
+                    android:layout_height="0dp"
+
+                    android:layout_weight="1"
+
                     android:orientation="horizontal">
 
-                    <TextView
-                        android:id="@+id/MinHeading"
-                        android:layout_width="111dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:text="MIN" />
 
                     <TextView
-                        android:id="@+id/Min"
-                        android:layout_width="230dp"
-                        android:layout_height="match_parent"
+
+                        android:id="@+id/detailMinLabel"
+
+                        android:layout_width="0dp"
+
+                        android:layout_height="wrap_content"
+
                         android:layout_weight="1"
-                        android:gravity="bottom"
-                        android:text="0:00 min/mile"
-                        android:textSize="25dp" />
+
+                        android:gravity="center"
+
+                        android:text="MIN" />
+
+
+                    <TextView
+
+                        android:id="@+id/minValue"
+
+                        android:layout_width="0dp"
+
+                        android:layout_height="wrap_content"
+
+                        android:layout_weight="1"
+
+                        android:gravity="center"
+
+                        android:text="75:24"
+
+                        android:textStyle="bold" />
+
+
+                    <TextView
+
+                        android:id="@+id/detailMinUnit"
+
+                        android:layout_width="0dp"
+
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:text="min per Mile" />
+
                 </LinearLayout>
+
             </LinearLayout>
 
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorPrimaryDark" />
+
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chart"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#eea696"/>
 
     </LinearLayout>
 
